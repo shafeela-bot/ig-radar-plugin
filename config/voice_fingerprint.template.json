@@ -1,0 +1,51 @@
+{
+  "_comment": "Shape of the voice fingerprint, not real data. Built by /ig-voice-profile (also runs automatically inside /ig-setup step 6). Real file lives at config/voice_fingerprint.json and is gitignored.",
+
+  "schema_version": 2,
+
+  "verbal_patterns": {
+    "common_vocabulary": [],
+    "signature_phrases": [],
+    "allowed_fillers": [],
+    "banned_fillers": []
+  },
+
+  "sentence_structure": {
+    "avg_length_words": null,
+    "question_ratio": null,
+    "contractions_always": null,
+    "punctuation_habits": []
+  },
+
+  "hook_style": {
+    "opening_type_distribution": {},
+    "avg_hook_duration_sec": null,
+    "preferred_triggers": [],
+    "_preferred_triggers_note": "Which of the 7 psychological triggers (config/psychological_triggers.json) this teammate's own hooks tend to lean on, if built from real footage. Empty/unknown for low_confidence fingerprints."
+  },
+
+  "pacing_signature": {
+    "avg_cuts_per_second": null,
+    "avg_shot_length_sec": null,
+    "cut_variance": null
+  },
+
+  "audio_dynamics": {
+    "loudness_curve_pattern": null,
+    "silence_usage": null,
+    "energy_arc": null
+  },
+
+  "vocabulary_bans": [],
+
+  "low_confidence": true,
+
+  "built_from": {
+    "n_videos_analyzed": 0,
+    "date_built": null,
+    "source_handle": null,
+    "method": null,
+    "_method_options": ["video_analysis", "self_description"],
+    "ffmpeg_analysis_included": false
+  }
+}

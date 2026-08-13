@@ -1,0 +1,16 @@
+# Personal config, tokens, and data — never shared between teammates.
+config/user_config.json
+config/voice_fingerprint.json
+config/banned_phrases.txt
+
+data/
+logs/
+.env
+
+*.log
+__pycache__/
+*.pyc
+.DS_Store
+
+# config/psychological_triggers.json is intentionally NOT listed here —
+# it's shared reference data, not personal config.

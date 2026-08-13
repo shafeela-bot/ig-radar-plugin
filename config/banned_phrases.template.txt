@@ -1,0 +1,33 @@
+# This is the SHAPE of banned_phrases.txt, not the real file.
+# The setup wizard (/ig-setup step 7) writes your real list to config/banned_phrases.txt (gitignored).
+#
+# Format: one phrase per line, case-insensitive substring match.
+# Lines starting with # are comments and ignored.
+#
+# --- Teammate's own banned words go here (collected during setup) ---
+
+# --- Starter AI-slop list (offered as a pre-load during setup; teammate can decline) ---
+delve
+delve into
+in the realm of
+dive into
+dive deep
+unlock the power of
+unlock the potential
+elevate
+elevate your
+at the end of the day
+it's important to note
+in today's fast-paced world
+game-changer
+game changer
+seamlessly
+tapestry
+navigate the complexities
+in conclusion
+furthermore
+moreover
+whether you're
+let's dive in
+buckle up
+without further ado

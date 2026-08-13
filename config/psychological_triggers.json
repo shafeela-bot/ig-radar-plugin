@@ -1,0 +1,56 @@
+{
+  "_credit": "This taxonomy is absorbed from a teammate's social-media-marketing-specialist skill. Shared reference data, not personal config — intentionally not gitignored.",
+  "schema_version": 1,
+
+  "triggers": [
+    {
+      "id": "curiosity_gap",
+      "name": "Curiosity gap",
+      "signature": "Sets up a question the viewer must resolve.",
+      "example_hook": "You won't believe what happens when...",
+      "use_when": "The payoff is genuinely surprising or counter-expectation — don't force this if the answer is predictable, the gap collapses and the hook falls flat."
+    },
+    {
+      "id": "fear_fomo",
+      "name": "Fear / FOMO",
+      "signature": "Urgency plus loss aversion.",
+      "example_hook": "Stop doing this — it's killing your reach",
+      "use_when": "There's a real, specific cost to inaction. Vague fear ('you're missing out on something') reads as manipulative; a named, concrete stake doesn't."
+    },
+    {
+      "id": "identity_signal",
+      "name": "Identity signal",
+      "signature": "Belonging to a tribe.",
+      "example_hook": "If you're a [X], you already know...",
+      "use_when": "The audience has a real shared identity/in-group (a niche, a role, a shared struggle) — this falls flat addressed to a generic audience."
+    },
+    {
+      "id": "pain_point",
+      "name": "Pain point",
+      "signature": "Meets the viewer in their frustration.",
+      "example_hook": "Tired of posting and getting zero views?",
+      "use_when": "The frustration is specific and the viewer would nod immediately — generic pain points ('life is hard') don't land."
+    },
+    {
+      "id": "transformation_promise",
+      "name": "Transformation promise",
+      "signature": "Before/after arc.",
+      "example_hook": "How I went from 0 to 100K in 60 days",
+      "use_when": "There's a real, specific before/after with numbers or a concrete comparison — vague improvement claims read as generic AI-slop territory."
+    },
+    {
+      "id": "social_proof",
+      "name": "Social proof",
+      "signature": "Bandwagon signal.",
+      "example_hook": "1M people already watched this — here's why",
+      "use_when": "The proof point is real and verifiable (an actual view count, an actual number of users) — a fabricated-sounding number undermines trust instantly."
+    },
+    {
+      "id": "controversy_hot_take",
+      "name": "Controversy / Hot take",
+      "signature": "Provokes debate.",
+      "example_hook": "Unpopular opinion: [X] is actually wrong",
+      "use_when": "The teammate actually holds the position and can defend it in comments — a hot take with no real conviction behind it reads as bait, not perspective."
+    }
+  ]
+}

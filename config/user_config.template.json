@@ -1,0 +1,97 @@
+{
+  "_comment": "This is the SHAPE of your config, not your config. The setup wizard (/ig-setup) writes the real file to config/user_config.json, which is gitignored. Never edit this template with real data.",
+
+  "schema_version": 2,
+  "created_at": null,
+  "updated_at": null,
+
+  "niche": {
+    "description": null,
+    "one_line_pitch": null
+  },
+
+  "accounts": {
+    "primary_handle": null,
+    "additional_handles": []
+  },
+
+  "competitors": {
+    "north_star_threshold_followers": 500000,
+    "_north_star_threshold_note": "Default is 500k. Lower this per-niche if the niche is too young to have mega-accounts yet, so the North Stars tier isn't permanently empty.",
+    "north_stars": [
+      {"handle": null, "followers": null, "added_at": null}
+    ],
+    "peers": [
+      {"handle": null, "followers": null, "added_at": null}
+    ],
+    "wild_cards": [
+      {"handle": null, "followers": null, "added_at": null}
+    ]
+  },
+
+  "hashtags": {
+    "tracked": []
+  },
+
+  "cadence": {
+    "radar_frequency": "weekly",
+    "_radar_frequency_options": ["weekly", "daily", "on_demand"],
+    "_radar_frequency_note": "This is a label describing intended cadence, not automated scheduling — /ig-radar is manually triggered. The queue architecture is designed to tolerate irregular timing gracefully, so running a bit late doesn't break anything. See docs/troubleshooting.md if you want to explore real OS-level scheduling yourself."
+  },
+
+  "delivery": {
+    "mode": "claude_chat",
+    "_mode_options": ["claude_chat", "claude_chat_plus_email", "claude_chat_plus_slack"],
+    "_mode_note": "Only claude_chat is actually implemented right now — email/Slack are collected as a preference for future work but don't do anything yet. The wizard is upfront about this.",
+    "email": null,
+    "slack_webhook_url": null
+  },
+
+  "apify": {
+    "token_env_var": "APIFY_API_TOKEN",
+    "actors": {
+      "reel_scraper": "apify/instagram-reel-scraper",
+      "hashtag_scraper": "apify/instagram-hashtag-scraper",
+      "follower_count_scraper": "apify/instagram-followers-count-scraper"
+    },
+    "budget_caps_usd": {
+      "_note": "These are safety ceilings for a single call, not the PRD's cost-model targets. They're set with margin above real observed Apify billing (validated via live testing on a prior build), which in some cases ran meaningfully higher than initial estimates — see docs/how-to-get-apify-token.md for the honest real-world cost breakdown.",
+      "competitor_finder_pilot": 0.35,
+      "tier_stratification": 0.10,
+      "hashtag_suggestion_pull": 0.15,
+      "onboarding_pilot_sweep": 0.15,
+      "voice_fingerprint_build": 2.00,
+      "voice_fingerprint_refresh": 2.00,
+      "weekly_radar_sweep": 4.00,
+      "postmortem": 0.15
+    },
+    "plan": "free",
+    "_plan_options": ["free", "starter"]
+  },
+
+  "scoring": {
+    "_comment": "100-point weighted outlier score. Absorbed from the social-media-marketing-specialist skill — see lib/outlier_scoring.py header for credit.",
+    "min_views_floor": 20000,
+    "view_score_weight": 40,
+    "comment_score_weight": 20,
+    "like_score_weight": 15,
+    "save_signal_points": 10,
+    "save_signal_keywords": ["save", "bookmark", "screenshot this", "save for later", "download this"],
+    "completion_bonus_points": 10,
+    "completion_max_duration_sec": 20,
+    "completion_min_view_multiple": 2,
+    "recency_bonus_points": 5,
+    "recency_max_days": 7,
+    "recency_min_view_multiple": 1.5,
+    "viral_threshold": 70,
+    "above_average_threshold": 40,
+    "top_n_per_competitor": 5,
+    "total_shortlist_cap": 30,
+    "baseline_window_days": 30,
+    "baseline_exclude_top_pct": 10
+  },
+
+  "voice_fingerprint_path": "config/voice_fingerprint.json",
+  "banned_phrases_path": "config/banned_phrases.txt",
+  "psychological_triggers_path": "config/psychological_triggers.json"
+}
