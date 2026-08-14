@@ -19,6 +19,16 @@ description: Generates 3 voice-matched script variations (A/B/C) from a queued o
 If the voice fingerprint is missing entirely, stop and point to `/ig-voice-profile` —
 don't generate "in their voice" with no voice data to work from.
 
+**Also pull her own proven patterns from her postmortem history** — this is what's
+actually shown to work for *her* specifically, not just for a competitor:
+```
+python3 lib/own_pattern_analysis.py --postmortems-dir data/postmortems \
+  --min-win-score <config/user_config.json → scoring.viral_threshold>
+```
+An empty pattern list just means she doesn't have enough postmortem history yet
+(fewer than 2 of her own videos have hit her viral threshold) — that's expected for
+a newer teammate, not a gap to mention or apologize for. Skip straight to step 2.
+
 **If the source outlier's hook was meme-audio-driven rather than narrated** (check
 the breakdown's `hook_type` — `Audio` with `trigger: none`, or a `_method_note` from
 trends flagging it), say so before generating: "heads up, this one rode a trending
@@ -47,6 +57,13 @@ The psychological trigger (from the breakdown's `trigger` field, one of the 7 in
 intact across a variation while changing its surface form is a legitimate way to
 vary structure without losing why the original worked. If the source had no clear
 trigger (meme/entertainment-driven), don't force one onto these variations either.
+
+**Weight toward her own proven patterns from step 1**, wherever they don't conflict
+with what a given variation is specifically varying — e.g. if her postmortem history
+shows `cta_present: comment_bait` correlates with her wins, keep that CTA shape across
+all 3 variations rather than defaulting to whatever CTA the source outlier happened to
+have. Her own proven pattern outweighs the source's structure here — it's evidence
+from her actual audience, not a competitor's.
 
 ## 3. Run each variation through the anti-slop gate
 
@@ -82,6 +99,10 @@ For each:
 - Close with **which of the 3 to shoot first**, one sentence why (tie it to the
   breakdown's `replicability` score and this teammate's actual constraints — e.g.
   "B's the easiest lift since it's just a screen recording, no on-camera time needed")
+- If step 1 surfaced her own proven patterns and a variation uses one, say so
+  explicitly (e.g. "uses her proven comment-bait CTA — present in 3/4 of her own
+  top-scoring videos") so she knows the choice is backed by her own data, not just a
+  stylistic pick
 
 ## 5. Mark the queue item used
 

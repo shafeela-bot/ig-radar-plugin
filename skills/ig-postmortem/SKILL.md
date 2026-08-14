@@ -46,24 +46,48 @@ this reel. It's their own content, so lean into specificity rather than hedging.
 
 ## 5. Compare to their own top-quartile pattern
 
-If they have enough history (multiple past postmortems or breakdowns of their own
-content — check `data/postmortems/*.json`), compare this reel's classified fields
-against what's repeated in their own past winners:
-- **What worked**: patterns present here that also show up in their historical wins
-- **What underperformed**: patterns present in their historical wins but *absent*
-  here — this is usually the more useful half
-- **Specific next-time recommendations** — concrete, tied to their actual voice
+Run the same analysis `/ig-script` uses to find her proven patterns (do this *before*
+step 6 saves the current reel, so it doesn't skew its own comparison):
+```
+python3 lib/own_pattern_analysis.py --postmortems-dir data/postmortems \
+  --min-win-score <config/user_config.json → scoring.viral_threshold>
+```
+If it returns patterns, compare this reel's classified fields against them:
+- **What worked**: fields on this reel that match a returned pattern's value
+- **What underperformed**: patterns present in her history but *absent* on this reel —
+  this is usually the more useful half
+- **Specific next-time recommendations** — concrete, tied to her actual voice
   fingerprint and niche, not generic advice
 
-If this is their first postmortem, say so — there's no historical pattern to compare
+If it returns an empty pattern list (fewer than 2 of her own postmortems have hit the
+viral threshold yet), say so — there's no reliable historical pattern to compare
 against yet, and that's fine, not a gap to apologize for. Just deliver the standalone
 breakdown and score.
 
 ## 6. Save
 
-Write to `data/postmortems/<YYYY-MM-DD>_<reel_id>.json` — the score, breakdown, and
-comparison (if any). This is what future postmortems compare against, so keep the
-classified fields in the same vocabulary `ig-outlier-breakdown` uses.
+Write to `data/postmortems/<YYYY-MM-DD>_<reel_id>.json` with the classified fields at
+the top level, in the same names `ig-outlier-breakdown` uses. `/ig-script` reads this
+same directory (via `lib/own_pattern_analysis.py`) to find what's proven to work for
+her — keeping this shape consistent is what makes that loop actually function, not
+just a nice-to-have:
+```json
+{
+  "date": "YYYY-MM-DD",
+  "url": "...",
+  "reel_id": "...",
+  "score": 0,
+  "hook_format": "...",
+  "format": "...",
+  "length_bracket": "...",
+  "trigger": "...",
+  "cta_present": "...",
+  "topic": "...",
+  "outlier_factor": "...",
+  "breakdown_prose": "the full hook deconstruction / structure / virality scorecard write-up",
+  "comparison_prose": "the what-worked / what-underperformed / recommendations write-up from step 5, or null if this was her first postmortem"
+}
+```
 
 ## 7. Deliver conversationally
 
