@@ -54,7 +54,15 @@ DEFAULT_ACTORS = {
 # live testing on a prior build, not just researched documentation, because
 # documentation and reality disagreed meaningfully in both directions:
 #   - reel-scraper: docs suggested $1.00/1k, observed ~$2.55-2.80/1k
-#   - hashtag-scraper: docs suggested $2.60/1k, observed ~$0.48/1k
+#   - hashtag-scraper: docs suggested $2.60/1k; observed live TWICE with
+#     inconsistent results — $0.48/1k on a 294-item pull (10 hashtags), then
+#     $1.95/1k on a 360-item pull (12 hashtags). Not a clean per-item OR
+#     per-hashtag rate either way — Apify's pay-per-event billing for this actor
+#     seems to depend on what data each hashtag actually returns (comment counts,
+#     etc.), not just result volume. Set well above both observations rather than
+#     the midpoint, since underestimating here is the failure mode that matters
+#     (a call that silently exceeds its budget cap's *intent* even while staying
+#     under the literal cap number).
 #   - transcript add-on: docs suggested ~$3.50/1k, observed ~$50/1k at small batch
 #     sizes (a 5-reel pull cost $0.2514) — looks closer to a flat ~$0.05/reel than
 #     a volume-scaled rate, and every real caller of this add-on (voice-profile,
@@ -63,7 +71,7 @@ DEFAULT_ACTORS = {
 PRICING_PER_1K_USD = {
     "apify/instagram-reel-scraper": 2.80,
     "apify/instagram-reel-scraper:with_transcript": 50.00,
-    "apify/instagram-hashtag-scraper": 0.65,
+    "apify/instagram-hashtag-scraper": 2.20,
     "apify/instagram-followers-count-scraper": 2.80,
 }
 
