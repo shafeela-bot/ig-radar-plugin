@@ -51,13 +51,85 @@ Warm intro, ~2 sentences on what the plugin does, mention ~10 minutes, ask if re
 (SETUP.md already sent an opening greeting if this is the very first message of the
 session — don't repeat yourself, just continue naturally into niche.)
 
-## Step 2 — Niche
+## Step 2 — Connect their Instagram, then read the niche off it
 
-Free text:
-> "Describe your niche in one sentence — what kind of videos do you make?"
+Two things happen here: connecting the account, and deriving the niche from what they
+actually post instead of asking them to describe it. Do them in that order — the second
+comes free once the first is done.
 
-Save as `niche.description`. Ask a quick follow-up only if the answer is too vague
-to search hashtags against later (e.g. "content" → ask what kind).
+**Why connecting comes first.** Asking someone to describe their own niche produces a
+self-description, and a self-description is what fills
+`voice_fingerprint.built_from.n_videos_analyzed` with 0 and `low_confidence` with true.
+That fingerprint then can't do its job. Their last 12 reels describe the account far
+better than a sentence they write about it, and reading them costs nothing.
+
+### 2a — Connect
+
+```
+python3 lib/composio_client.py check
+```
+
+Exit 0 means ready — note the `word_id` under `instagram[]`, you'll save it in Step 11.
+Otherwise the `stage` field says what's missing:
+
+- `stage: "install"` → `curl -fsSL https://composio.dev/install | sh`
+- `stage: "login"` → `composio login --no-wait` prints a URL. **Show them the URL and
+  wait** — they have to open it themselves. Then `composio login --poll` blocks until
+  they're done. Never use `composio login --agent` here; it signs in as a robot account
+  with none of their data on it.
+- `stage: "connect"` → `composio link instagram`
+
+If more than one Instagram is already connected, ask which page this setup is for
+(AskUserQuestion, one option per `word_id`). Getting this wrong fails quietly, not
+loudly — every later call returns the other page's numbers with no error.
+
+Requires a **Business or Creator** account; a personal one returns permission errors on
+insights. If that's what you hit, say so plainly and take the fallback below.
+
+**If they'd rather not connect**, that's fine and not a failure. Fall back to asking
+"Describe your niche in one sentence — what kind of videos do you make?", carry on to
+Step 3, and mention once that Step 7's voice profile will be weaker for it. Everything
+below assumes they connected.
+
+### 2b — Read the account
+
+```
+python3 lib/composio_client.py user-info --account <word_id>
+python3 lib/composio_client.py reels --limit 12 --account <word_id>
+```
+
+`user-info` gives you the **exact** handle. Use that string, never what they typed —
+Apify calls key off it, and a wrong handle returns an empty result set rather than an
+error, so a typo yields confident analysis of nothing.
+
+`reels` returns their last 12 with the real numbers attached: views, reach, saves,
+shares, average watch time. Read the captions and the numbers together.
+
+Mind the duration gap documented in `to_apify_shape` in `lib/composio_client.py` — the
+Graph API has no duration field, so any score computed here is a floor, up to 10 points
+below the true value. Don't present a score as final at this step.
+
+### 2c — Analyse, then confirm
+
+Say what you worked out, in their words, and let them correct it:
+
+> "Had a look at your last 12. Reads like short screen-recorded website tours, no face
+> on camera, mostly aimed at founders — and the one that took off was the startup-tools
+> one: 11x your usual, 46 saves against a normal of 1. Sound right?"
+
+Cover what kind of videos, who they're for, and which post did best and by how much.
+Free text, so they can correct any part. Apply corrections directly rather than noting
+them and moving on.
+
+Save the agreed version as `niche.description` and `niche.one_line_pitch`.
+
+**Keep two things from this step** — both save real money later:
+
+- **The reel data.** Step 7's voice profile can be built from it for free instead of
+  paying Apify's transcript add-on (~$0.05/reel).
+- **Their own baseline.** `compute_baseline()` from `lib/outlier_scoring.py` runs on this
+  data as-is, so write `data/baselines/<handle>.json` now rather than paying Apify to
+  scrape a page they own. `/ig-postmortem` needs it and would otherwise pull it itself.
 
 ## Step 3 — Apify token
 

@@ -33,6 +33,39 @@ AskUserQuestion:
 
 ### Upload path
 
+**Try Composio before spending anything.** If their Instagram is connected (it will be
+when `ig-setup` Step 2 ran), their own reels come back free — and richer, since the
+Graph API returns saves, shares, reach and average watch time that Apify cannot see:
+
+```
+python3 lib/composio_client.py check
+python3 lib/composio_client.py reels --limit 30 --account <accounts.composio_account>
+```
+
+If `ig-setup` Step 2 already pulled this data in the same session, reuse it rather than
+calling again — say so ("reusing what I pulled earlier").
+
+What this gets you and what it doesn't:
+
+- **Verbal patterns** — the Graph API returns captions, not speech. For text-on-screen
+  creators the burned-in caption *is* the script, and you can read it off frames for
+  free: download `_media_url` and extract frames with ffmpeg. Record which source you
+  used in `built_from`, because burned-in text and spoken audio can differ, and a
+  fingerprint that claims to know their spoken voice when it only saw captions is the
+  kind of quiet wrongness that's hard to catch later.
+- **Pacing and audio** — `_media_url` gives you the actual file, so `lib/ffmpeg_analysis.py`
+  works on it directly. Free, and better than any estimate.
+- **What it can't give you** — real speech transcripts. If the account is a talking-head
+  and you need the spoken words, fall back to the Apify path below and say why you're
+  spending.
+
+**Sample size honesty.** `n_videos_analyzed` is the number of videos you actually
+studied, not the number requested. If the account only has 6 reels, that's the ceiling —
+keep `low_confidence: true` and say plainly that it's thin, rather than presenting a
+five-video fingerprint as settled.
+
+### Apify path (talking-head accounts, or no Composio connection)
+
 1. Ask for their Instagram handle (skip if refreshing — reuse `built_from.source_handle`
    unless they say they want a different account analyzed).
 2. Pull their reels + transcripts, budget-capped at
