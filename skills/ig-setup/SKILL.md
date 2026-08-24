@@ -29,9 +29,22 @@ could've been a tap.
 
 ## Before you start
 
-- Confirm `config/user_config.json` doesn't already exist (or, if this was triggered
-  manually via `/ig-reconfigure` → "redo setup", confirm the teammate actually wants
-  to start over — it overwrites their config).
+- **Don't test for the config file merely existing — test whether it's been filled in.**
+  If `switch-page.sh` is in use, `config/user_config.json` is a symlink into the active
+  profile and a freshly scaffolded page already has one, copied from the template. So
+  "file exists" means nothing. A page still needs setup when
+  `niche.description` is null, or every tier under `competitors` is empty:
+  ```
+  python3 -c "import json;c=json.load(open('config/user_config.json'));n=c.get('niche',{}).get('description');t=sum(len(v) for k,v in c.get('competitors',{}).items() if isinstance(v,list) and k!='excluded');print('needs_setup' if not n or t==0 else 'already_set_up')"
+  ```
+  Only when that prints `already_set_up` should you ask whether they really mean to
+  start over (it overwrites). If it prints `needs_setup`, just run — this is either a
+  first-time teammate or a new page they've just created, and stopping to ask "are you
+  sure?" about an empty template is pure friction.
+- **Which page am I setting up?** If `profiles/` exists, run `./switch-page.sh` first
+  and say the active page's name out loud before doing anything. Setting up a page while
+  pointed at a different one silently overwrites the wrong config, and every path in
+  this skill resolves through that symlink.
 - You'll be writing real files by the end of this skill: `config/user_config.json`,
   `config/voice_fingerprint.json`, `config/banned_phrases.txt`. All three are
   gitignored — that's correct, don't fight it. (`config/psychological_triggers.json`
