@@ -90,9 +90,27 @@ Otherwise the `stage` field says what's missing:
   wait** — they have to open it themselves. Then `composio login --poll` blocks until
   they're done. Never use `composio login --agent` here; it signs in as a robot account
   with none of their data on it.
-- `stage: "connect"` → `composio link instagram`
+- `stage: "connect"` → link the account. **Which command depends on whether this is
+  their first Instagram or an additional one**, and getting it wrong looks like
+  "Instagram won't connect" rather than a missing flag:
 
-If more than one Instagram is already connected, ask which page this setup is for
+  ```
+  # first Instagram on this Composio account:
+  composio link instagram --no-browser
+
+  # second or later — --alias is REQUIRED and Composio refuses the link without it:
+  composio link instagram --alias <handle> --no-browser
+  ```
+
+  Check which case you're in with `python3 lib/composio_client.py connections` — if
+  `instagram` already has an entry, you need `--alias`. Use the page's handle as the
+  alias so the connection is self-documenting a month from now.
+
+  `--no-browser` prints the URL instead of trying to open one. **Show them the URL and
+  wait for them to approve it** — you cannot complete an OAuth flow on their behalf.
+  Add `--no-wait` if you'd rather print and poll separately.
+
+If more than one Instagram ends up connected, ask which page this setup is for
 (AskUserQuestion, one option per `word_id`). Getting this wrong fails quietly, not
 loudly — every later call returns the other page's numbers with no error.
 
