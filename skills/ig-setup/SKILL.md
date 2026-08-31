@@ -1,6 +1,6 @@
 ---
 name: ig-setup
-description: Runs the ~10-minute onboarding wizard that configures a brand-new teammate's niche, Apify token, competitors, hashtags, voice fingerprint, and banned phrases. Auto-triggered by SETUP.md when config/user_config.json is missing; also runnable manually via /ig-setup to redo setup from scratch.
+description: Runs the ~10-minute onboarding wizard that connects a brand-new teammate's Instagram (via Composio) and Apify account, then configures their niche, competitors, hashtags, voice fingerprint, and banned phrases. Auto-triggered by SETUP.md when config/user_config.json is missing; also runnable manually via /ig-setup to redo setup from scratch.
 ---
 
 # ig-setup: the onboarding wizard
@@ -53,8 +53,11 @@ could've been a tap.
 - Keep a scratch dict in your head (or a temp file if the conversation is long) of
   everything collected so far, since this spans ~10+ turns and you'll assemble it
   into JSON at the end.
-- **Token comes early, deliberately.** Steps 4–7 all make real Apify calls, so the
-  token has to be live before any of them can run.
+- **Both connections come first, deliberately.** Step 2 links Composio (free) then
+  Apify (paid), in that order. Composio costs nothing and immediately shows them their
+  own numbers, which earns the right to ask for a paid key straight after. And Steps 4–7
+  all make real Apify calls, so the token has to be live before any of them can run —
+  asking mid-flow means interrupting a conversation that was going well.
 
 ---
 
@@ -62,28 +65,31 @@ could've been a tap.
 
 Warm intro, ~2 sentences on what the plugin does, mention ~10 minutes, ask if ready.
 (SETUP.md already sent an opening greeting if this is the very first message of the
-session — don't repeat yourself, just continue naturally into niche.)
+session — don't repeat yourself, just continue naturally into connecting their
+accounts.)
 
-## Step 2 — Connect their Instagram, then read the niche off it
+## Step 2 — Connect the two accounts
 
-Two things happen here: connecting the account, and deriving the niche from what they
-actually post instead of asking them to describe it. Do them in that order — the second
-comes free once the first is done.
+Both connections happen here, before anything else. **Composio first, Apify second** —
+that order matters and isn't arbitrary.
 
-**Why connecting comes first.** Asking someone to describe their own niche produces a
-self-description, and a self-description is what fills
-`voice_fingerprint.built_from.n_videos_analyzed` with 0 and `low_confidence` with true.
-That fingerprint then can't do its job. Their last 12 reels describe the account far
-better than a sentence they write about it, and reading them costs nothing.
+**Why Composio comes first.** It's free, it takes one browser click, and it immediately
+gives you something to show them: their own handle, their own numbers, their own reels.
+Nothing has been asked of them yet except permission. By the time you ask for a paid API
+key in 2b, they've already seen the thing read their account back to them.
 
-### 2a — Connect
+**Why Apify comes second and not later.** Steps 4 through 7 all make real Apify calls,
+so the token has to be live before any of them can run. Asking mid-flow means stopping a
+conversation that was going well to go and find a billing page.
+
+### 2a — Instagram, via Composio (free)
 
 ```
 python3 lib/composio_client.py check
 ```
 
 Exit 0 means ready — note the `word_id` under `instagram[]`, you'll save it in Step 11.
-Otherwise the `stage` field says what's missing:
+Otherwise the `stage` field says exactly what's missing:
 
 - `stage: "install"` → `curl -fsSL https://composio.dev/install | sh`
 - `stage: "login"` → `composio login --no-wait` prints a URL. **Show them the URL and
@@ -108,21 +114,63 @@ Otherwise the `stage` field says what's missing:
 
   `--no-browser` prints the URL instead of trying to open one. **Show them the URL and
   wait for them to approve it** — you cannot complete an OAuth flow on their behalf.
-  Add `--no-wait` if you'd rather print and poll separately.
 
 If more than one Instagram ends up connected, ask which page this setup is for
 (AskUserQuestion, one option per `word_id`). Getting this wrong fails quietly, not
 loudly — every later call returns the other page's numbers with no error.
 
 Requires a **Business or Creator** account; a personal one returns permission errors on
-insights. If that's what you hit, say so plainly and take the fallback below.
+insights. If that's what you hit, say so plainly and carry on — the plugin still works,
+it just loses saves, shares, reach and watch time.
 
-**If they'd rather not connect**, that's fine and not a failure. Fall back to asking
-"Describe your niche in one sentence — what kind of videos do you make?", carry on to
-Step 3, and mention once that Step 7's voice profile will be weaker for it. Everything
-below assumes they connected.
+**If they'd rather not connect at all**, that's fine and not a failure. Say once that
+Step 3's niche and Step 7's voice profile will be weaker for it, then continue.
 
-### 2b — Read the account
+**Confirm what you found before moving on.** One line, so the free step visibly paid off:
+
+> "Connected — @thewebplug.ai, 9 followers, 6 reels. Got your real numbers now."
+
+### 2b — Apify token (paid, ~cents per run)
+
+Now, and not before:
+
+> "Next up: paste your Apify API token — that's what scrapes your competitors. Composio
+> reads *your* account; Apify reads *theirs*.
+> No account yet? Here's a 60-second guide:
+> [docs/how-to-get-apify-token.md](../../docs/how-to-get-apify-token.md)"
+
+Naming the split matters. Two API keys with no explanation feels like bureaucracy; "one
+reads mine, one reads theirs" is a reason.
+
+Validate immediately — this call is free, not a paid one, despite what you might assume:
+```
+python3 lib/apify_client.py validate-token --token <pasted_token>
+```
+If `"ok": false`, show the actual error message plainly and point to
+`docs/troubleshooting.md`. Don't guess at the fix yourself; let the teammate paste a
+corrected token and retry. Don't move on until this returns `"ok": true`.
+
+Store the token in `.env` as `APIFY_API_TOKEN=...` (create the file if missing — it's
+gitignored). Do **not** put the raw token inside `config/user_config.json`; that file
+should only ever reference `apify.token_env_var`.
+
+If they don't have Apify set up yet and want to pause here, that's fine — make it easy
+to resume: nothing before this point needs to be re-asked next time they run
+`/ig-setup`. Their Instagram connection from 2a persists.
+
+## Step 3 — Niche, read off the account
+
+Don't ask them to describe their niche. Their last 12 reels describe it better than a
+sentence they write about it, and you already have access.
+
+**Why this isn't just a nicety.** Asking produces a self-description, and a
+self-description is what fills `voice_fingerprint.built_from.n_videos_analyzed` with 0
+and `low_confidence` with true. That fingerprint then can't do its job.
+
+**Skip to the free-text fallback** ("Describe your niche in one sentence — what kind of
+videos do you make?") only if they declined to connect in 2a.
+
+### Read the account
 
 ```
 python3 lib/composio_client.py user-info --account <word_id>
@@ -140,7 +188,7 @@ Mind the duration gap documented in `to_apify_shape` in `lib/composio_client.py`
 Graph API has no duration field, so any score computed here is a floor, up to 10 points
 below the true value. Don't present a score as final at this step.
 
-### 2c — Analyse, then confirm
+### Analyse, then confirm
 
 Say what you worked out, in their words, and let them correct it:
 
@@ -161,32 +209,6 @@ Save the agreed version as `niche.description` and `niche.one_line_pitch`.
 - **Their own baseline.** `compute_baseline()` from `lib/outlier_scoring.py` runs on this
   data as-is, so write `data/baselines/<handle>.json` now rather than paying Apify to
   scrape a page they own. `/ig-postmortem` needs it and would otherwise pull it itself.
-
-## Step 3 — Apify token
-
-Everything from here through Step 7 needs this to actually run, so grab it now
-rather than at the end:
-
-> "Next up: paste your Apify API token — that's what actually does the scraping.
-> No account yet? Here's a 60-second guide:
-> [docs/how-to-get-apify-token.md](../../docs/how-to-get-apify-token.md)"
-
-Validate immediately — this call is free, not a paid one, despite what you might
-assume:
-```
-python3 lib/apify_client.py validate-token --token <pasted_token>
-```
-If `"ok": false`, show the actual error message plainly and point to
-`docs/troubleshooting.md`. Don't guess at the fix yourself; let the teammate paste a
-corrected token and retry. Don't move on until this returns `"ok": true`.
-
-Store the token in `.env` as `APIFY_API_TOKEN=...` (create the file if missing — it's
-gitignored). Do **not** put the raw token inside `config/user_config.json`; that file
-should only ever reference `apify.token_env_var`.
-
-If the teammate doesn't have Apify set up yet and wants to pause here, that's fine —
-just make it easy to resume: nothing before this point needs to be re-asked next
-time they run `/ig-setup`.
 
 ## Step 4 — Competitors
 
@@ -368,7 +390,7 @@ AskUserQuestion:
 - **These look great** → proceed to Step 11.
 - **Meh, tweak the seeds** → go back to Step 4, keep everything else already
   collected (niche, token, hashtags-so-far, banned phrases) so they're not re-asked.
-- **Terrible, redo** → go back to Step 2. Confirm first: "Want me to wipe the niche
+- **Terrible, redo** → go back to Step 3. Confirm first: "Want me to wipe the niche
   and start clean, or just redo the competitors?" — don't nuke the token/banned
   phrases unless they actually say so.
 

@@ -34,7 +34,7 @@ AskUserQuestion:
 ### Upload path
 
 **Try Composio before spending anything.** If their Instagram is connected (it will be
-when `ig-setup` Step 2 ran), their own reels come back free — and richer, since the
+when `ig-setup` Step 3 ran), their own reels come back free — and richer, since the
 Graph API returns saves, shares, reach and average watch time that Apify cannot see:
 
 ```
@@ -42,7 +42,7 @@ python3 lib/composio_client.py check
 python3 lib/composio_client.py reels --limit 30 --account <accounts.composio_account>
 ```
 
-If `ig-setup` Step 2 already pulled this data in the same session, reuse it rather than
+If `ig-setup` Step 3 already pulled this data in the same session, reuse it rather than
 calling again — say so ("reusing what I pulled earlier").
 
 What this gets you and what it doesn't:

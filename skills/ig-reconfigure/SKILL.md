@@ -70,7 +70,7 @@ what actually happens.
 
 ## [6] Update Apify token
 
-Same flow as `ig-setup` Step 3: prompt for the new token, validate with
+Same flow as `ig-setup` Step 2b: prompt for the new token, validate with
 `python3 lib/apify_client.py validate-token --token <token>` before saving, show the
 real error and point to `docs/troubleshooting.md` if it fails. Update `.env`, not
 `config/user_config.json`.

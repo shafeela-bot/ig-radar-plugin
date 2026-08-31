@@ -1,105 +1,43 @@
-# How a script gets built
+# The reel formula
 
-`/ig-script` can hand you a script that reads well and is still unfalsifiable — if it
-doesn't say which video it came from, you can't tell what to change when the post
-underperforms. This doc is the method for building a script that carries its own
-evidence, worked out during a real session on 2026-08-24.
+One structure for every video on this page: **copied hook → crazy useful body → ebook
+CTA.** Restructured 2026-08-27 around a single end goal.
 
-Two things it insists on: **every creative choice names the measurement behind it**, and
-**anything that isn't measured gets labelled a guess.** A thinner script with honest
-provenance beats a confident one you can't debug.
+**End goal: platform signups.** The reel earns a comment, the comment earns the ebook
+link, the ebook earns the signup. Views are not the goal and never were — the page's
+1,539-view reel produced zero comments and moved nobody onto the platform. Every rule
+below is judged on whether it feeds that chain.
 
-## The steps
+Two disciplines carry over from the previous version of this doc, because they are what
+make a script debuggable when it flops: **every creative choice names the measurement
+behind it**, and **anything unmeasured gets labelled a guess.**
 
-### 1. Score competitors against their own median, never against each other
+---
 
-An account with a 54,727-view median and one with an 8,047-view median are not
-comparable in absolute views. Use `compute_baseline()` per channel, then `score_reel()`
-against that channel's own baseline. A 59,828-view reel on a 21,487-median channel
-(2.8x) is a stronger signal than a 500,000-view reel on a channel that always does
-500,000.
+## Part 1 — HOOK: copied, never written
 
-Watch the floor. `MIN_VIEWS_FLOOR` defaults to 20,000 in `lib/outlier_scoring.py`, which
-is calibrated for six-figure accounts — for a small account every reel scores 0 and the
-whole exercise silently returns nothing. Pass `scoring.min_views_floor` from
-`config/user_config.json` and set it to roughly 3-4x your own median.
+The strictest rule in the document. A hook is not composed, it is **lifted verbatim from
+a reel that already proved it works.**
 
-### 2. Throw out anything older than about 45 days
+If you cannot name the source reel, you do not have a hook. Record all four:
 
-This is the step that changes results most, and it did not exist before.
+| Required | Why |
+|---|---|
+| Source URL | So the claim is checkable |
+| Views + multiple vs *that account's own* median | 500k on a 500k-median account proves nothing |
+| Post date | Must be ≤45 days old |
+| Audience the source reel was aimed at | The filter below |
 
-A real example: `techh_hq` had reels at 5.8M, 4.4M and 3.9M views — all posted 196-236
-days earlier. Everything that channel posted in the following month sat at 17k-85k, with
-the same template. Copying those three would have meant copying an era that had already
-closed. Filter by age *before* ranking, or the dead giants dominate every list.
+### Preferred shape: belief reversal
 
-### 3. Rank by spread and recency, not by the biggest multiple
+State what everyone already believes, then flip it. "Everyone's using X. X is the reason
+you're stuck." The hook's job is to make continuing feel involuntary.
 
-Two traps:
+### The audience filter — the one that has already burned this page
 
-- **Low medians inflate multiples.** A 94x on an 8,047-median channel and a 2.8x on a
-  21,487-median channel are closer than they look. Sanity-check against absolute views.
-- **One account tagging heavily looks like a trend.** In one 42-reel pull, a 26-tag
-  gaming-rig cluster accounted for 56 hits — all from a single account. Counting reels
-  would have made it the top signal. Counting *distinct accounts* correctly demoted it,
-  and promoted `#website`, used by four separate competitors.
+**A hook copied correctly can still fail, because it brings the wrong crowd.**
 
-For a format, prefer one that **repeats**. A three-site list format that ran three times
-in two weeks (156,713 / 154,968 / 49,611 views) is worth more than a single spike,
-because you can tell it wasn't luck.
-
-### 4. Reject sources whose topic your own account has already failed on
-
-The highest multiple in a sweep is worth nothing if it points at the wrong crowd. In
-that session the top recent outlier by views was a movie/watch-party site. The account
-being written for had already posted a movie site (157 views, 3 saves) and a Minecraft
-site (136 views, 1 save). Its one success was founder-tagged.
-
-Competitor data tells you what works *on their audience*. Your own postmortems tell you
-who yours is. When they disagree, your own data wins.
-
-### 5. Verify the site is genuinely usable before writing a single line
-
-Do this every time, and do it before scripting, not after.
-
-One near-miss: BuiltWith looked like an ideal subject until a live check showed its
-homepage now hides the lookup behind a signup — the shoot would have hit a wall
-mid-film. Four other sites checked out and their real numbers ("151,259 apps ranked by
-2,029,353 users") went straight into the script as facts rather than vague claims.
-
-Check: is it free, does it need an account, does the specific feature you're about to
-film actually exist. If you can't confirm, say so in the script rather than letting them
-find out with a camera running.
-
-### 6. Apply the voice fingerprint literally
-
-`config/voice_fingerprint.json` is only useful if it's obeyed exactly. From a real
-five-video sample:
-
-- A signature opener appearing in 5 of 5 videos is a hard constraint, not a suggestion.
-  Never paraphrase it.
-- Punctuation tics are real style. Lines ending in commas rather than periods, and zero
-  exclamation points across the sample, are both reproducible instructions.
-- Build the fingerprint from on-screen text if there's no transcript — frames read with
-  `ffmpeg` are free, where the Apify transcript add-on runs about $0.05/reel. Record
-  which source you used, because burned-in captions and spoken audio can differ.
-
-### 7. Take length and cut rate from recent winners, not from instinct
-
-Length and pacing are separate variables and conflating them produces bad advice.
-
-The mistake worth avoiding: concluding "shorter is better" because a 13.9s reel beat a
-16.6s one. The 16.6s reel lost because it had **2 cuts, a 5.5s mean shot and heavy
-silence** — not because of its length. Recent winners in the same niche ran 23-39
-seconds. A 24s video cutting every 2.5s is 9 cuts and still feels fast.
-
-So: hold the cut rate near the winner's mean shot length, and let duration extend only
-when there's more payload to fill it. Put the biggest visual moment past the halfway
-mark — the winning reel's loudness curve was `builds_up`, the flop's was `winds_down`.
-
-### 8. Pick the framing from measured framings
-
-Wording of the title card moved results more than anything else in that sweep:
+The measured framings from the last sweep:
 
 | Framing | vs own median |
 |---|---|
@@ -108,69 +46,218 @@ Wording of the title card moved results more than anything else in that sweep:
 | "3 websites to ..." | 2.8x |
 | "websites you should know" | 2.8x |
 
-Copy the framing *and* check it suits your audience. "Stay away from" suits addictive or
-novelty sites; pointed at a founder audience it's a 9.6x framing aimed at the wrong
-people, which is still a flop.
+This page copied the 94.3x framing on 2026-08-24 — "Illegal websites you're not supposed
+to know part 4". Result: **165 views, 0 saves.** The framing was reproduced faithfully
+and still failed, because "illegal websites" recruits curiosity-scrollers, and
+curiosity-scrollers will not trade a comment for a founder ebook. The 9.6x "stay away
+from these" framing has the same problem pointed at the same crowd.
 
-### 9. Conversion asks go in the caption, never on screen
+So a hook must clear **both** bars: proven on a real outlier, *and* aimed at people who
+would want the ebook. A hook that only clears the first is how you get comments from
+people who want a free anything.
 
-Retention is the ranking input, so in-video asks cost you the thing that decides
-distribution. The one reel in that sample with an on-screen ask ("Comment 'games' for
-the link") was its second-worst.
+Contrast: the page's only genuine hit (1,539 views, 46 saves, 11.1x median) was tagged
+`#startuptips`/`#startup` and carried a founder payload. Competitor data tells you what
+works on *their* audience; your own postmortems tell you who yours is. When the two
+disagree, your own data wins.
 
-Put the save prompt in the caption instead. It satisfies
-`scoring.save_signal_keywords` — worth 10 points the account's best reel forfeited by
-omitting it — and pushes saves, which is what drove the outlier in the first place. One
-ask per post; stacking save, comment and link asks splits intent.
+### Where the account signature goes now
 
-### 10. Don't force proven tags onto an off-topic video
+`config/voice_fingerprint.json` records "Did you know if you go to this website," in 5 of
+5 videos and calls it the hardest signature in the set — never to be paraphrased. That
+collides with the copied-hook rule, since both want the opening seconds.
 
-Tempting and wrong. If `#startuptips` carries your only hit, it does not follow that it
-belongs on a video about free Photoshop alternatives — it just sends a
-software-savings video to founders who didn't ask for one. Either match the tags to the
-topic, or change the framing so the proven tags fit honestly.
+**Resolution: the copied hook takes 0-2s, and the signature line moves to the first body
+beat.** The signature survives intact, the hook slot stays proven, and neither rule
+bends. Do not run both in the first two seconds — that is three seconds of preamble
+before any value, and it is how retention dies.
 
-### 11. Attach the evidence split
+---
 
-Two lists, kept separate:
+## Part 2 — BODY: one crazy thing, then relentless usefulness
 
-- **Traced to data** — one line per choice naming the measurement and the reel it came
+The body does two jobs at once: keep them watching, and leave them able to act. Miss the
+second and the video reads as an ad for the ebook, which collapses saves.
+
+### The crazy beat
+
+Exactly one, and it is the single most surprising **verifiable** fact you have. Place it
+**past the halfway mark**, not at the start — the page's winning reel had a `builds_up`
+loudness curve, its worst had `winds_down`.
+
+Verify it live before filming. A previous session nearly scripted BuiltWith before a
+check showed its lookup had moved behind a signup — the shoot would have hit a wall
+mid-film. Where a real number exists, use the real number ("151,259 apps ranked by
+2,029,353 users"), never a vague intensifier.
+
+### Ultra-useful test
+
+**The viewer must be able to act on the video without the ebook.** The ebook is the
+upgrade, not the payload. If the only value sits behind the comment gate, you are asking
+strangers to pay before being given anything.
+
+Payload class matters more than production. From this page's own six-reel comparison,
+where all six were production-identical:
+
+- **Searchable databases, directories, calculators** → 46 saves, 21 shares
+- **One-look toys and novelties** → 0 saves, 0 shares
+
+### Pacing — measured against the niche, 2026-08-31
+
+Every winning reel in this niche cuts **faster than this page does.** Real ffmpeg
+measurements from the 2026-08-31 sweep:
+
+| Account | Result | Duration | Cuts | Mean shot |
+|---|---|---|---|---|
+| setupsai | 1,179,290 views | 13.0s | 9 | **1.30s** |
+| ryxai_ | 5.6x own median | 13.8s | 9 | **1.38s** |
+| beasttechx | 2.8x own median | 8.7s | 6 | **1.24s** |
+| gnutechai | 117.6x own median | 23.6s | 12 | 1.81s |
+| promptingbad | 12.0x own median | 32.0s | 13 | 2.29s |
+| maxtalkstech_ | 202 comments | 46.8s | 19 | 2.34s |
+| **this page, best reel** | 1,539 views | 13.9s | **5** | **2.31s** |
+
+**At ~13 seconds the benchmark is 9 cuts, not 5.** This page's best-ever reel runs at
+roughly half the cut rate of every short-form winner in the set. The old "≤2.5s mean
+shot" rule was set from this page's own history and is far too lax — 2.31s is a *long
+form* cadence here, appropriate at 30-45s, not at 13s.
+
+Use this instead:
+
+- **Under 15s → mean shot ~1.3s** (9-10 cuts in 13s)
+- **25-35s → mean shot ~2.3s** (13 cuts in 32s, promptingbad's proven shape)
+- **45s+ → mean shot ~2.3s** (19 cuts, maxtalkstech_'s shape)
+
+Loudness is **not** a differentiator and needs no work: all six winners sit at -14.1 to
+-14.5 LUFS, and this page already runs -14.48.
+
+Length follows payload, not instinct. The page's 16.6s flop lost on cut rate and heavy
+silence, not duration.
+
+---
+
+## Part 3 — CTA: the ebook, once, at the end
+
+The conversion step, and the reason the page exists.
+
+- **One ask.** Comment a keyword, get the ebook link. Nothing else — no save prompt, no
+  link-in-bio, no follow ask. Stacked asks split intent.
+- **Placement: the last 1.5-2s, after the value has fully landed.** Never before the
+  crazy beat.
+- **Keyword: short, lowercase, typo-proof.** It has to survive being typed by someone
+  half-watching.
+- **Caption carries the same single ask**, matching the on-screen keyword exactly.
+
+### Choosing which ebook — verified 2026-08-31
+
+`greta.sh/ebooks` holds **130 free guides**, and the page states they are free and *"do
+not sit behind a form."* Two consequences:
+
+1. **The comment is not a gate, it is distribution.** You are genuinely just sending
+   someone a link they could have found. That keeps the ask honest — and the comment is
+   still a real ranking input, which is the point.
+2. **Pick the ebook whose promise continues the reel's hook**, and pick it *before*
+   writing the hook, because the hook's outcome slot has to match it. maxtalkstech_'s
+   202-comment reel used the keyword "Diet" on a fitness reel — topic-matched, which is
+   why it converted.
+
+Prefer a guide where **greta.sh is the substance, not a banner.** Compare:
+
+- `/ebooks/lean-startup-stack` — greta.sh is the centerpiece ("builds your app —
+  frontend, backend, logins, domain, Stripe payments, and deploy, all from plain English
+  prompts"), "around $38 a month", "built for total beginners". Converts.
+- `/ebooks/30-websites-you-need` — better name-match for this page, but greta.sh appears
+  only as a closing CTA. Weaker for signups.
+
+The reel's job is to earn the comment. The **ebook's** job is to sell the platform. Do
+not make the video do both.
+
+### The trade being made here, stated plainly
+
+The previous strategy said conversion asks go in the caption and **never** on screen,
+because retention is the ranking input. Its evidence: the one reel with an on-screen ask
+("Comment 'games' for the link") landed at 134 views.
+
+That evidence is weak — n=1, and it was posted `is_shared_to_feed=false`, so it was never
+a clean test. It also cuts the other way: this page earns ~0 comments, which is 20 points
+of the 100-point score it can never reach, and comments are a real ranking input. A
+comment CTA attacks that directly.
+
+So the ask moves on screen deliberately, with two costs accepted:
+
+1. **10 scoring points forfeited.** `scoring.save_signal_keywords` only fires on a save
+   prompt in the caption, and the caption now carries the comment ask instead.
+2. **Retention risk**, which is why the CTA is capped at the last ~2 seconds.
+
+`config/voice_fingerprint.json` still records the old no-in-video-CTA rule and the
+caption save-prompt rule. Both are **superseded by this doc** and need updating.
+
+### Greta placement is now solved by the ebook
+
+The old rule had greta.sh as "the substrate, never the subject," needing a ~2s in-video
+reveal at 10.5s. **Drop it.** The ebook is the bridge now, and a better one — it takes
+the conversion job out of the video entirely, which protects the retention the reveal
+always risked costing.
+
+---
+
+## Judge every post on this, before you post it
+
+Set the bar in advance or you are guessing again next time.
+
+| Metric | Bar | Why |
+|---|---|---|
+| **Comments** | the new primary | It is the conversion step |
+| Retention | ≥50% | The winner hit 52.4% against a 38-43% baseline |
+| Saves | ≥4% of reach | The winner hit 4.06%; median was ~1.3% |
+
+Watch for the specific failure mode: **comments up, retention down.** That means the CTA
+is too early or too long — shorten it or push it later. If saves collapse below ~2.5%
+while comments rise, the body stopped being useful on its own.
+
+Views follow these. Tracking views alone tells you a post did well without telling you
+why, which means the next one is guesswork.
+
+## The evidence split
+
+Attach two separate lists to every script:
+
+- **Traced to data** — one line per choice, naming the measurement and the reel it came
   from.
-- **Guesses** — the subject itself, specific search terms, which beat is "the impressive
-  one", copy lines. These are usually the majority on an early script, and that's fine
-  as long as they're labelled.
+- **Guesses** — usually the subject, the search terms, which beat is "the crazy one", and
+  most copy lines. On an early script these are the majority, and that is fine *as long
+  as they are labelled.*
 
-Never present a hunch in the same voice as a measurement. State the sample size plainly:
-"one win, a five-video voice profile, one week of competitor posts" is a hint, not proof.
-
-### 12. Judge the result on saves and retention, not views
-
-Set the bar before posting. For the account in that session: **saves above 4% of reach**
-and **retention above 50%** — the only two metrics its 1,535-view outlier actually beat
-the field on (46 saves against a median of 1; 52.4% against 38-43%).
-
-Views follow those two. Watching views alone tells you a post did well without telling
-you why, which means the next one is guesswork again.
+Never state a hunch in a measurement's voice. Say the sample size out loud: "one win, a
+five-video voice profile, one competitor sweep" is a hint, not proof.
 
 ## Where the numbers come from
 
 | What you need | Source | Cost |
 |---|---|---|
 | Own views, reach, saves, shares, retention | Instagram Graph API (Composio) | free |
-| Competitor reels, captions, view counts | `apify/instagram-reel-scraper` | ~$2.80/1k results |
-| Follower counts for tiering | `apify/instagram-followers-count-scraper` | ~$2.80/1k |
-| Cuts, shot length, loudness, silence | `lib/ffmpeg_analysis.py` | free |
-| On-screen script text | frames via ffmpeg, read directly | free |
+| Competitor reels, captions, view counts | `apify/instagram-reel-scraper` | ~$2.80/1k |
+| **Verbatim hook text (voiceover)** | same actor, `includeTranscript` | ~$0.05/reel |
+| **Verbatim hook text (on-screen, silent reels)** | frames via ffmpeg | free — **ffmpeg not installed** |
+| Cuts, shot length, loudness, silence | `lib/ffmpeg_analysis.py` | free — **needs ffmpeg** |
 | Site claims | live check of the site | free |
 
-Saves, shares, reach and average watch time are **only** available first-party through
-the Graph API — the Apify actors can't see them, and they're the metrics that explain
-outliers. Pull your own numbers from the API and use Apify only for competitors.
+Two gaps worth knowing about, because they block Part 1:
+
+- **No verbatim hook text has ever been stored.** `data/outliers/*.json` keeps
+  classifications (`hook_format: "Bold claim"`) and captions, not opening lines. The
+  transcript spend from the 2026-08-13 sweep survives as a line item; the transcripts
+  themselves were never saved. Fix: write transcript text into the outlier record.
+- **ffmpeg is not installed**, so burned-in on-screen text cannot be read. Much of this
+  niche is text-on-screen, so transcripts alone will come back empty for some reels.
+
+Saves, shares, reach and average watch time are **only** available first-party via the
+Graph API. Pull your own numbers there; use Apify only for competitors.
 
 ## Related
 
 - `docs/understanding-outlier-scores.md` — the 100-point formula
-- `docs/psychological-triggers-guide.md` — the 7-trigger taxonomy
-- `skills/ig-script/SKILL.md` — the skill this method is meant to inform
-- `skills/ig-postmortem/SKILL.md` — where the second data point comes from;
-  `lib/own_pattern_analysis.py` needs two wins before it returns a pattern
+- `docs/psychological-triggers-guide.md` — the 7-trigger taxonomy (belief reversal is
+  closest to "Controversy / Hot take"; it is not yet its own entry)
+- `skills/ig-script/SKILL.md` — the skill this formula feeds
+- `skills/ig-postmortem/SKILL.md` — where the next data point comes from

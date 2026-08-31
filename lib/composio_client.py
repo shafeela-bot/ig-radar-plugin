@@ -15,7 +15,16 @@ Design goals mirror apify_client.py:
   budget caps here — but calls DO consume the account's Graph API rate limit, so
   batch where possible (see get_reels_with_insights).
 
-Field-name and CLI gotchas confirmed by live testing on 2026-08-24:
+Field-name and CLI gotchas confirmed by live testing on 2026-08-24 (and 2026-08-27):
+- **Big responses come back as a stub, not as data** (found 2026-08-27). Above roughly
+  10,000 tokens of output the CLI writes the payload to a temp file and returns
+  `{"successful": true, "error": null, "storedInFile": true, "tokenCount": N,
+  "outputFilePath": "..."}` with NO `data` key. `successful` is true and `error` is
+  null, so it reads as a clean success. `_load_spilled()` now reads the file back, so
+  callers never see this — but if you write a new Composio wrapper anywhere else, this
+  is the failure that will bite you, and it bites SILENTLY. It cost `reels --limit 25`
+  its entire result set on a 9-reel account. Note it depends on total output size, not
+  on item count: more *fields* tips a call over as readily as more items.
 - `composio connections list` — the subcommand is REQUIRED. Bare `composio connections`
   prints help and exits non-zero.
 - `composio tools list <toolkit>` takes the toolkit POSITIONALLY. `--toolkit` is
@@ -74,6 +83,16 @@ class ComposioError(Exception):
     pass
 
 
+class ComposioSpillError(ComposioError):
+    """
+    Composio wrote a large response to disk and we could not read it back.
+
+    Its own subclass because this failure means "the data exists but we lost it," which
+    callers must never quietly turn into "there was no data" — that confusion is the
+    exact bug this class exists to prevent. See _load_spilled().
+    """
+
+
 class NotConnectedError(Exception):
     """Composio isn't installed, isn't logged in, or has no Instagram account linked."""
 
@@ -108,12 +127,73 @@ def _run(args: list[str], timeout: int = CLI_TIMEOUT_SECS) -> str:
     return result.stdout
 
 
+def _load_spilled(slug: str, envelope: dict) -> dict:
+    """
+    Recover a response Composio wrote to disk instead of returning inline.
+
+    Above roughly 10,000 tokens of output the CLI stops inlining the payload. Instead it
+    writes the whole envelope to a temp file and hands back a stub that carries
+    `storedInFile`, `tokenCount` and `outputFilePath` — and **no `data` key at all**:
+
+        {"successful": true, "error": null, "logId": "log_...",
+         "storedInFile": true, "tokenCount": 10328,
+         "outputFilePath": "/var/folders/.../INSTAGRAM_GET_IG_USER_MEDIA_OUTPUT_x.json"}
+
+    `successful` is still true and `error` is still null, so nothing looks wrong. Read
+    the spill file and the real payload is all there, `data` included.
+
+    This is the single nastiest failure mode in this wrapper, because the stub is a
+    *success*. Before this function existed, `_execute` did `payload.get("data") or {}`,
+    so every spilled response became an empty dict and every caller silently saw
+    nothing: `reels --limit 25` returned `{"n": 0, "reels": []}` on an account with 9
+    reels, and a postmortem built on it reported no data rather than an error.
+
+    Whether a call spills depends on total output size, not on the limit you asked for,
+    so it is not reproducible by item count alone — asking for more *fields* tips a call
+    over just as easily as asking for more items. Confirmed live 2026-08-27 on a 9-reel
+    account: MEDIA_FIELDS (which includes both media_url and thumbnail_url, ~2KB/item)
+    spilled at limit>=9 while the same limit with a light field set stayed inline.
+    """
+    path = envelope.get("outputFilePath")
+    if not envelope.get("storedInFile") or not path:
+        raise ComposioSpillError(
+            f"{slug} reported success but returned no 'data' key, and no spill file to "
+            f"read it from. Envelope: {json.dumps(envelope)[:300]}"
+        )
+    try:
+        with open(path, encoding="utf-8") as fh:
+            spilled = json.load(fh)
+    except FileNotFoundError as e:
+        raise ComposioSpillError(
+            f"{slug} spilled its {envelope.get('tokenCount')}-token response to {path}, "
+            f"but that file is missing. It lives in the OS temp dir, so it can be swept "
+            f"between the call and this read. Re-run the call; if it keeps happening, "
+            f"request fewer fields or a smaller limit so the response stays inline."
+        ) from e
+    except (OSError, json.JSONDecodeError) as e:
+        raise ComposioSpillError(f"{slug} spill file {path} is unreadable: {e}") from e
+
+    # The spilled copy carries its own envelope, and it is the authoritative one.
+    if not spilled.get("successful", True):
+        raise ComposioError(f"{slug} failed inside its spill file: {spilled.get('error')}")
+    if "data" not in spilled:
+        raise ComposioSpillError(
+            f"{slug} spill file {path} has no 'data' key either. Keys present: "
+            f"{sorted(spilled)}"
+        )
+    return spilled
+
+
 def _execute(slug: str, data: dict, account: str | None = None) -> dict:
     """
     Run one Composio tool. Composio wraps every response as
     {"successful": bool, "data": ..., "error": ...} — unwrap it here so callers never
     have to know that, and raise on the failure case rather than returning a dict that
     looks almost right.
+
+    Large responses are the exception: they come back as a stub pointing at a temp file
+    with no `data` key, which _load_spilled() reads back. Everything above this line
+    behaves identically whether or not a given call happened to spill.
     """
     args = ["execute", slug, "-d", json.dumps(data)]
     if account:
@@ -125,6 +205,8 @@ def _execute(slug: str, data: dict, account: str | None = None) -> dict:
         raise ComposioError(f"{slug} returned non-JSON: {raw[:200]}") from e
     if not payload.get("successful"):
         raise ComposioError(f"{slug} failed: {payload.get('error') or payload}")
+    if "data" not in payload:
+        payload = _load_spilled(slug, payload)
     return payload.get("data") or {}
 
 
@@ -195,6 +277,10 @@ def get_insights(media_id: str, metrics: list[str] | None = None,
     Returns {} rather than raising when a media item has no insights at all — a
     non-reel or a very fresh post legitimately has none, and that shouldn't abort
     a whole batch.
+
+    A ComposioSpillError is deliberately NOT swallowed: "we lost the response" is not
+    the same as "this post has no insights," and collapsing the two would put zeros
+    into a baseline.
     """
     try:
         data = _execute(
@@ -202,6 +288,8 @@ def get_insights(media_id: str, metrics: list[str] | None = None,
             {"ig_media_id": media_id, "metric": metrics or REEL_METRICS},
             account,
         )
+    except ComposioSpillError:
+        raise
     except ComposioError:
         return {}
     out = {}
