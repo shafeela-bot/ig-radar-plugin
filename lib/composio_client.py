@@ -101,15 +101,31 @@ def _cli() -> str:
     exe = shutil.which("composio")
     if exe:
         return exe
-    # The installer drops it here and appends to the shell profile, which a
-    # non-interactive subprocess won't have sourced yet — so check the path directly
+    # The installer drops it in one of these and appends to the shell profile, which a
+    # non-interactive subprocess won't have sourced yet — so check the paths directly
     # rather than trusting PATH.
-    fallback = os.path.expanduser("~/.local/bin/composio")
-    if os.path.exists(fallback):
-        return fallback
+    candidates = [os.path.expanduser("~/.local/bin/composio")]
+    if os.name == "nt":
+        candidates += [
+            os.path.expanduser(r"~\.local\bin\composio.exe"),
+            os.path.expandvars(r"%LOCALAPPDATA%\Programs\composio\composio.exe"),
+            os.path.expandvars(r"%APPDATA%\npm\composio.cmd"),
+        ]
+    for path in candidates:
+        if os.path.exists(path):
+            return path
+
+    if os.name == "nt":
+        how = ("  winget install Composio.Composio\n"
+               "or, if you have Node:\n"
+               "  npm install -g composio\n"
+               "The curl|sh installer in the Composio docs is POSIX-only and will not "
+               "work in PowerShell or cmd.")
+    else:
+        how = "  curl -fsSL https://composio.dev/install | sh"
     raise NotConnectedError(
         "composio CLI not found. Install it with:\n"
-        "  curl -fsSL https://composio.dev/install | sh\n"
+        f"{how}\n"
         "then open a new terminal and run: composio login"
     )
 

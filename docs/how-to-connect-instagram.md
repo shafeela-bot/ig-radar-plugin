@@ -80,7 +80,7 @@ Put that in the page's config at `accounts.composio_account`. It's passed as
 **This is not optional once you have two pages connected.** Without it Composio picks
 an account for you, and a call returns the wrong page's numbers **with no error** — you
 get a clean-looking postmortem built entirely on the other page's data. If you're using
-`./switch-page.sh`, each profile under `profiles/` carries its own value, so switching
+`./switch-page.sh` (or `switch-page.py` on Windows), each profile under `profiles/` carries its own value, so switching
 pages switches the connection too.
 
 ## What it can't do

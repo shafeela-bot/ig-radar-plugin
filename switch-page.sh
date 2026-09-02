@@ -11,6 +11,11 @@
 # second page needed no code changes.
 #
 # Everything private to a page lives in profiles/<handle>/ and is git-ignored.
+#
+# CROSS-PLATFORM: switch-page.py does exactly the same thing and is the ONLY version
+# that works on Windows (ln -s needs admin there; the .py falls back to junctions and
+# hard links, which don't). Both are safe to use on the same repo. See
+# docs/windows-setup.md.
 
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"

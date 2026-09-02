@@ -42,6 +42,8 @@ could've been a tap.
   first-time teammate or a new page they've just created, and stopping to ask "are you
   sure?" about an empty template is pure friction.
 - **Which page am I setting up?** If `profiles/` exists, run `./switch-page.sh` first
+  (on Windows: `python3 switch-page.py` — the `.sh` is bash-only; see
+  `docs/windows-setup.md`)
   and say the active page's name out loud before doing anything. Setting up a page while
   pointed at a different one silently overwrites the wrong config, and every path in
   this skill resolves through that symlink.

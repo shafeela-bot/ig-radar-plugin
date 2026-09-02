@@ -11,6 +11,10 @@ cross-competitor pattern-extraction method are absorbed from a teammate's
 `social-media-marketing-specialist` skill. See the header comments in
 `lib/outlier_scoring.py` and `lib/pattern_extraction.py` for full credit.
 
+> **On Windows?** Read [docs/windows-setup.md](docs/windows-setup.md) first. Two
+> one-time steps (a `python3` shim and `python3 switch-page.py`) are required before
+> anything in this README will run.
+
 ## Who this is for
 
 Teammates comfortable with Claude Code, terminal, and git — but nobody should need

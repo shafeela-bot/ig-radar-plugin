@@ -3,6 +3,26 @@
 Claude: this file is your entry point every time a teammate opens Claude Code in this
 project. Read it before doing anything else this session.
 
+## If this teammate is on Windows, handle that first
+
+Check the platform before anything else. On Windows two things are broken until
+they're set up, and both look like "the plugin is broken" rather than "setup is
+incomplete":
+
+1. **`python3` does not exist.** Every command in every skill uses it. Confirm with
+   `python3 --version`. If that fails, send them to
+   [docs/windows-setup.md](docs/windows-setup.md) step 1 — a one-line `python3.bat`
+   shim makes all 33 commands work as written. Do **not** start rewriting commands to
+   `py -3`; the shim is the fix.
+2. **`config/user_config.json` will be missing**, because it and `data/` are links
+   created by a script that doesn't run on Windows. That means the "brand-new
+   teammate" check below fires for someone who is not new. Before treating them as
+   new, look in `profiles/` — if a page is already there, they need
+   `python3 switch-page.py <handle>`, not `/ig-setup`.
+
+On Windows use `switch-page.py`, never `switch-page.sh`. Both do the same job; the
+`.sh` is bash-only.
+
 ## First, check for a config
 
 Look for `config/user_config.json`.
