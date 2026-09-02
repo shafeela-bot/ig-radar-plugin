@@ -93,14 +93,18 @@ python3 lib/composio_client.py check
 Exit 0 means ready — note the `word_id` under `instagram[]`, you'll save it in Step 11.
 Otherwise the `stage` field says exactly what's missing:
 
-- `stage: "install"` → the `error` field already holds the correct install command
-  **for their platform**. Show it verbatim and let them run it — macOS/Linux get
-  `curl -fsSL https://composio.dev/install | sh`, Windows gets
-  `winget install Composio.Composio` (or `npm install -g composio` with Node).
-  **Never tell a Windows teammate to install WSL, Git Bash, or any POSIX shell.**
-  The Composio CLI is native on Windows; `curl | sh` failing in PowerShell is that
-  one installer being POSIX-only, not a missing shell. See `docs/windows-setup.md`
-  step 4.
+- `stage: "install"` (macOS/Linux) → `curl -fsSL https://composio.dev/install | sh`
+- `stage: "api_key"` (**always on Windows** — there is no Windows CLI build, and WSL is
+  NOT needed): the client talks to Composio's REST API instead. Walk them through it:
+  connect Instagram in the browser at https://app.composio.dev, copy the **project** API
+  key from dashboard settings (a `uak_...` string is the CLI's user key and gets a 401),
+  then add `COMPOSIO_API_KEY=<key>` to `.env` beside `APIFY_API_TOKEN` and re-run
+  `check`. Full walkthrough in `docs/windows-setup.md` step 4. With the key set, the API
+  backend takes priority over the CLI everywhere, and `login`/`link` below are skipped
+  entirely — the dashboard did both.
+  **Never stall the wizard on Composio.** It only adds their own account's saves,
+  shares, reach and watch time; competitors, tiers, hashtags, banned phrases and the
+  pilot sweep are Apify-powered. Offer the skip and mention `/ig-reconfigure`.
 - `stage: "login"` → `composio login --no-wait` prints a URL. **Show them the URL and
   wait** — they have to open it themselves. Then `composio login --poll` blocks until
   they're done. Never use `composio login --agent` here; it signs in as a robot account

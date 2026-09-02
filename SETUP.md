@@ -19,12 +19,15 @@ incomplete":
    teammate" check below fires for someone who is not new. Before treating them as
    new, look in `profiles/` — if a page is already there, they need
    `python3 switch-page.py <handle>`, not `/ig-setup`.
-3. **Composio installs natively — WSL is never required.** The `curl | sh` installer
-   in Composio's own docs is POSIX-only and dies in PowerShell. That is not a missing
-   shell; on Windows it is `winget install Composio.Composio` (or
-   `npm install -g composio`). `python3 lib/composio_client.py check` prints the right
-   command for the platform it is running on — trust its `error` field over any
-   install line quoted in a doc, and never gate Instagram setup on installing WSL.
+3. **Composio has no Windows CLI — use an API key, not WSL.** Upstream ships Linux
+   and macOS binaries only, there is no winget package, and `@composio/cli` is not on
+   npm. `lib/composio_client.py` therefore talks to Composio's REST API directly
+   whenever `COMPOSIO_API_KEY` is set, which needs nothing installed. Walk them
+   through [docs/windows-setup.md](docs/windows-setup.md) step 4: connect Instagram at
+   app.composio.dev in the browser, copy the **project** API key, add
+   `COMPOSIO_API_KEY=` to `.env`. Never tell a Windows teammate to install WSL for
+   this, and never stall the wizard on it — if they'd rather not bother, Composio only
+   adds their OWN account's metrics and `/ig-reconfigure` can add it any time.
 
 On Windows use `switch-page.py`, never `switch-page.sh`. Both do the same job; the
 `.sh` is bash-only.

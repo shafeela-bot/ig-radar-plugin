@@ -67,8 +67,22 @@ import shutil
 import statistics
 import subprocess
 import sys
+import urllib.error
+import urllib.request
 
 CLI_TIMEOUT_SECS = 180
+HTTP_TIMEOUT_SECS = 60
+
+# The REST API is the CLI's own backend, and the only route that works on native
+# Windows — Composio ships no Windows binary (Linux/macOS only, see INSTALL.md
+# upstream). With COMPOSIO_API_KEY set, every call below goes over HTTP and the CLI
+# is never needed. Composio's docs also recommend the API over the CLI for anything
+# non-interactive: "Don't build a production integration on top of the CLI."
+API_BASE = "https://backend.composio.dev/api/v3"
+# Path gotcha, verified live 2026-09-02: the collection is /connected_accounts with
+# UNDERSCORES. The hyphenated /connected-accounts printed in some doc pages hits the
+# marketing site's Next.js 404 page and returns HTML, not JSON — which reads as a
+# transport failure rather than a wrong URL.
 
 # Metrics worth pulling for a reel. Ordered roughly by how much they explain.
 REEL_METRICS = [
@@ -97,6 +111,65 @@ class NotConnectedError(Exception):
     """Composio isn't installed, isn't logged in, or has no Instagram account linked."""
 
 
+def _api_key() -> str | None:
+    """
+    COMPOSIO_API_KEY from the environment, else from the repo's .env (same place
+    APIFY_API_TOKEN already lives, so there is one file to manage, not two).
+    Its presence is what selects the HTTP backend over the CLI.
+    """
+    key = os.environ.get("COMPOSIO_API_KEY")
+    if key:
+        return key.strip()
+    env = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
+    try:
+        with open(env, encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if line.startswith("COMPOSIO_API_KEY="):
+                    return line.split("=", 1)[1].strip().strip("'\"") or None
+    except OSError:
+        pass
+    return None
+
+
+def _http(method: str, path: str, body: dict | None = None) -> dict:
+    """One REST call. Same failure vocabulary as _run() so callers can't tell which
+    backend they got."""
+    key = _api_key()
+    if not key:
+        raise NotConnectedError("COMPOSIO_API_KEY is not set.")
+    req = urllib.request.Request(
+        f"{API_BASE}{path}",
+        method=method,
+        data=json.dumps(body).encode() if body is not None else None,
+        headers={"x-api-key": key, "Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT_SECS) as resp:
+            raw = resp.read().decode("utf-8", "replace")
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", "replace")[:400]
+        if e.code in (401, 403):
+            # A `uak_...` key is the CLI's *user* key out of ~/.composio/user_data.json
+            # and the v3 API rejects it — verified live. The API wants the PROJECT key
+            # from the dashboard, which is a different string entirely.
+            hint = ""
+            if (key or "").startswith("uak_"):
+                hint = (" That looks like the CLI's own user key (uak_...), which the "
+                        "REST API does not accept. Copy the project API key from "
+                        "https://app.composio.dev instead.")
+            raise NotConnectedError(
+                f"Composio rejected the API key ({e.code}).{hint} Detail: {detail[:200]}"
+            ) from e
+        raise ComposioError(f"{method} {path} failed: {e.code} {detail}") from e
+    except urllib.error.URLError as e:
+        raise ComposioError(f"{method} {path} failed: {e.reason}") from e
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as e:
+        raise ComposioError(f"{method} {path} returned non-JSON: {raw[:200]}") from e
+
+
 def _cli() -> str:
     exe = shutil.which("composio")
     if exe:
@@ -116,13 +189,21 @@ def _cli() -> str:
             return path
 
     if os.name == "nt":
-        how = ("  winget install Composio.Composio\n"
-               "or, if you have Node:\n"
-               "  npm install -g composio\n"
-               "The curl|sh installer in the Composio docs is POSIX-only and will not "
-               "work in PowerShell or cmd.")
+        # Upstream ships Linux x64/ARM64 and macOS binaries only — no Windows build,
+        # no winget package, and @composio/cli 404s on npm. Their docs say "use WSL".
+        # We don't need to: the CLI is only a wrapper over the REST API, so on Windows
+        # the API key IS the supported path and nothing has to be installed at all.
+        how = ("There is no Windows build of the Composio CLI — and you don't need "
+               "one.\n"
+               "Use an API key instead (no install, no WSL):\n"
+               "  1. Sign in at https://app.composio.dev and connect Instagram there.\n"
+               "  2. Copy your API key from the dashboard's settings.\n"
+               "  3. Add this line to the .env file in the repo root:\n"
+               "       COMPOSIO_API_KEY=your_key_here\n"
+               "  4. Re-run: python3 lib/composio_client.py check")
     else:
-        how = "  curl -fsSL https://composio.dev/install | sh"
+        how = ("  curl -fsSL https://composio.dev/install | sh\n"
+               "or skip the CLI entirely by putting COMPOSIO_API_KEY=<key> in .env.")
     raise NotConnectedError(
         "composio CLI not found. Install it with:\n"
         f"{how}\n"
@@ -211,6 +292,17 @@ def _execute(slug: str, data: dict, account: str | None = None) -> dict:
     with no `data` key, which _load_spilled() reads back. Everything above this line
     behaves identically whether or not a given call happened to spill.
     """
+    if _api_key():
+        body: dict = {"arguments": data}
+        if account:
+            body["connected_account_id"] = _resolve_account(account)
+        payload = _http("POST", f"/tools/execute/{slug}", body)
+        if not payload.get("successful", True):
+            raise ComposioError(f"{slug} failed: {payload.get('error') or payload}")
+        # No spill handling needed: spilling to a temp file is a CLI display behaviour,
+        # not an API one. The HTTP response always carries `data` inline.
+        return payload.get("data") or {}
+
     args = ["execute", slug, "-d", json.dumps(data)]
     if account:
         args += ["--account", account]
@@ -227,11 +319,36 @@ def _execute(slug: str, data: dict, account: str | None = None) -> dict:
 
 
 def check() -> dict:
-    """Is the CLI present, logged in, and is an Instagram account connected?"""
+    """
+    Is a working backend present, authenticated, and is an Instagram account connected?
+
+    Two backends, checked in that order of preference:
+      - COMPOSIO_API_KEY set  -> REST. No install; the only route on native Windows.
+      - otherwise             -> the composio CLI, as before.
+    `stage` tells the caller exactly what is missing: api_key | install | login | connect.
+    """
+    if _api_key():
+        try:
+            conns = connections()
+        except NotConnectedError as e:
+            return {"ok": False, "stage": "api_key", "error": str(e)}
+        ig = conns.get("instagram") or []
+        active = [c for c in ig if (c.get("status") or "").upper() == "ACTIVE"]
+        if not active:
+            return {
+                "ok": False, "stage": "connect", "backend": "api",
+                "error": "API key works, but no ACTIVE Instagram connection on this "
+                         "project. Connect Instagram at https://app.composio.dev "
+                         "(Instagram toolkit -> Connect), approve it in the browser, "
+                         "then re-run this check.",
+            }
+        return {"ok": True, "backend": "api", "instagram": active}
+
     try:
         cli = _cli()
     except NotConnectedError as e:
-        return {"ok": False, "stage": "install", "error": str(e)}
+        stage = "api_key" if os.name == "nt" else "install"
+        return {"ok": False, "stage": stage, "error": str(e)}
 
     try:
         who = _run(["whoami"]).strip()
@@ -256,16 +373,57 @@ def check() -> dict:
             "ok": False, "stage": "connect", "cli": cli, "account": account,
             "error": "No active Instagram connection. Run `composio link instagram`.",
         }
-    return {"ok": True, "cli": cli, "account": account, "instagram": active}
+    return {"ok": True, "backend": "cli", "cli": cli, "account": account,
+            "instagram": active}
 
 
 def connections() -> dict:
-    """Connected accounts per toolkit. Note the required `list` subcommand."""
+    """
+    Connected accounts grouped by toolkit, e.g. {"instagram": [{...}, ...]}.
+
+    Both backends produce that same shape so callers never branch. The CLI already
+    groups; the API returns a flat list, so we group it here and normalise the id
+    onto `word_id` — the CLI's name for it, and what user_config.json stores under
+    accounts.composio_account.
+    """
+    if _api_key():
+        payload = _http("GET", "/connected_accounts?limit=100")
+        items = payload.get("items") or payload.get("data") or []
+        if isinstance(items, dict):
+            items = items.get("items") or []
+        grouped: dict[str, list] = {}
+        for item in items:
+            toolkit = item.get("toolkit") or {}
+            slug = (toolkit.get("slug") if isinstance(toolkit, dict) else toolkit) or ""
+            entry = dict(item)
+            entry.setdefault("word_id", item.get("id") or item.get("connected_account_id"))
+            grouped.setdefault(slug.lower(), []).append(entry)
+        return grouped
+
     raw = _run(["connections", "list"])
     try:
         return json.loads(raw)
     except json.JSONDecodeError:
         return {}
+
+
+def _resolve_account(account: str) -> str:
+    """
+    Map whatever the caller passed for --account onto a connected_account_id.
+
+    user_config.json stores the CLI's `word_id`, which for API-backed setups already
+    IS the id, so the common case is a passthrough. The lookup exists for configs
+    written by a CLI-based machine and then used from a Windows one, where the stored
+    value may be a nickname instead.
+    """
+    if account.startswith("ca_"):
+        return account
+    for entries in connections().values():
+        for entry in entries:
+            if account in (entry.get("word_id"), entry.get("id"),
+                           entry.get("nickname"), entry.get("user_id")):
+                return entry.get("id") or entry.get("word_id") or account
+    return account
 
 
 def get_user_info(account: str | None = None) -> dict:

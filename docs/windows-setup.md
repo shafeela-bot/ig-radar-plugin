@@ -121,28 +121,51 @@ checks for both and disables itself if either is missing.
 ## 4. Optional: Composio, for your own Instagram metrics
 
 Needed for saves, shares, reach and average watch time — the numbers Apify cannot
-see. The `curl | sh` installer in Composio's docs is POSIX-only and will not run in
-PowerShell.
+see. **On Windows, use an API key. Do not install WSL for this.**
 
-```powershell
-winget install Composio.Composio
+There is no Windows build of the `composio` CLI — it ships Linux x64/ARM64 and macOS
+binaries only, there is no winget package, and `@composio/cli` is not on npm. Composio's
+own docs tell Windows users to install WSL. You don't have to: the CLI is a wrapper
+over Composio's REST API, and `lib/composio_client.py` speaks that API directly. Set an
+API key and every Instagram feature works on native Windows with nothing installed.
+
+**1. Connect Instagram in the browser.** Sign in at
+[app.composio.dev](https://app.composio.dev), find the Instagram toolkit, and connect
+your account. This is the same OAuth approval `composio link instagram` would have
+walked you through — it just happens in the dashboard instead of a terminal.
+
+**2. Copy your project API key** from the dashboard's settings.
+
+> Not the `uak_...` string from a CLI install on another machine — that is the CLI's
+> *user* key and the REST API rejects it with a 401. You want the **project** key.
+
+**3. Put it in `.env`** in the repo root, next to `APIFY_API_TOKEN`:
+
+```
+COMPOSIO_API_KEY=your_key_here
 ```
 
-or, with Node installed:
+**4. Verify:**
 
 ```powershell
-npm install -g composio
-```
-
-Then:
-
-```powershell
-composio login
 python3 lib/composio_client.py check
 ```
 
-`check` tells you whether the CLI is found, you're logged in, and an Instagram
-account is connected.
+`"ok": true` with `"backend": "api"` means Instagram is connected and every skill will
+use it. The `stage` field names what's missing otherwise: `api_key` (key absent or
+rejected) or `connect` (key fine, no ACTIVE Instagram on the project).
+
+The key takes priority over the CLI wherever both exist, so the same `.env` works
+unchanged if you later move the repo to macOS or WSL.
+
+### Or skip it
+
+Composio only reads **your own** account. Competitors, tiers, hashtags, banned phrases,
+outlier scoring and the pilot sweep are all Apify-powered and work fully without it.
+`/ig-setup` offers to continue without Instagram, and `/ig-reconfigure` adds it later.
+The cost of skipping: `/ig-postmortem` cannot see saves, shares or watch time on your
+own reels, and your voice fingerprint comes from a short interview rather than your
+last 12 reels.
 
 ---
 

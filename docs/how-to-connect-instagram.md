@@ -38,17 +38,19 @@ curl -fsSL https://composio.dev/install | sh
 Lands at `~/.local/bin/composio` and adds itself to your shell profile. Open a new
 terminal afterwards, or the `composio` command won't be found.
 
-**On Windows**, that installer is POSIX-only and will not run in PowerShell or cmd.
-You do **not** need WSL — the CLI is native:
+**On Windows there is no CLI build — skip to the API key route and ignore steps 2
+and 3 below.** Composio ships Linux and macOS binaries only, and its docs say to use
+WSL; you don't need to. Connect Instagram in the browser at
+[app.composio.dev](https://app.composio.dev), copy your **project** API key, and put it
+in `.env`:
 
-```powershell
-winget install Composio.Composio
-# or, with Node installed:
-npm install -g composio
+```
+COMPOSIO_API_KEY=your_key_here
 ```
 
-Then open a new terminal, or `composio` won't be found. See
-[docs/windows-setup.md](windows-setup.md) step 4.
+`lib/composio_client.py` then talks to Composio's REST API directly and every skill
+works the same. Full walkthrough: [docs/windows-setup.md](windows-setup.md) step 4.
+That route also works on macOS and Linux if you'd rather not install the CLI at all.
 
 **2. Log in**
 
