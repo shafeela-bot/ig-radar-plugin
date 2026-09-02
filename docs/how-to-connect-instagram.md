@@ -38,6 +38,18 @@ curl -fsSL https://composio.dev/install | sh
 Lands at `~/.local/bin/composio` and adds itself to your shell profile. Open a new
 terminal afterwards, or the `composio` command won't be found.
 
+**On Windows**, that installer is POSIX-only and will not run in PowerShell or cmd.
+You do **not** need WSL — the CLI is native:
+
+```powershell
+winget install Composio.Composio
+# or, with Node installed:
+npm install -g composio
+```
+
+Then open a new terminal, or `composio` won't be found. See
+[docs/windows-setup.md](windows-setup.md) step 4.
+
 **2. Log in**
 
 ```bash

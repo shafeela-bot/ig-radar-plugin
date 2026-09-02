@@ -93,7 +93,14 @@ python3 lib/composio_client.py check
 Exit 0 means ready — note the `word_id` under `instagram[]`, you'll save it in Step 11.
 Otherwise the `stage` field says exactly what's missing:
 
-- `stage: "install"` → `curl -fsSL https://composio.dev/install | sh`
+- `stage: "install"` → the `error` field already holds the correct install command
+  **for their platform**. Show it verbatim and let them run it — macOS/Linux get
+  `curl -fsSL https://composio.dev/install | sh`, Windows gets
+  `winget install Composio.Composio` (or `npm install -g composio` with Node).
+  **Never tell a Windows teammate to install WSL, Git Bash, or any POSIX shell.**
+  The Composio CLI is native on Windows; `curl | sh` failing in PowerShell is that
+  one installer being POSIX-only, not a missing shell. See `docs/windows-setup.md`
+  step 4.
 - `stage: "login"` → `composio login --no-wait` prints a URL. **Show them the URL and
   wait** — they have to open it themselves. Then `composio login --poll` blocks until
   they're done. Never use `composio login --agent` here; it signs in as a robot account

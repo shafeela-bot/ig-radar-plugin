@@ -19,6 +19,12 @@ incomplete":
    teammate" check below fires for someone who is not new. Before treating them as
    new, look in `profiles/` — if a page is already there, they need
    `python3 switch-page.py <handle>`, not `/ig-setup`.
+3. **Composio installs natively — WSL is never required.** The `curl | sh` installer
+   in Composio's own docs is POSIX-only and dies in PowerShell. That is not a missing
+   shell; on Windows it is `winget install Composio.Composio` (or
+   `npm install -g composio`). `python3 lib/composio_client.py check` prints the right
+   command for the platform it is running on — trust its `error` field over any
+   install line quoted in a doc, and never gate Instagram setup on installing WSL.
 
 On Windows use `switch-page.py`, never `switch-page.sh`. Both do the same job; the
 `.sh` is bash-only.
